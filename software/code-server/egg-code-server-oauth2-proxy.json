@@ -1,0 +1,101 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-07-18T18:26:39-03:00",
+    "name": "Code-Server with oauth2-proxy",
+    "author": "arvati@hotmail.com",
+    "description": "Run VS Code on any machine anywhere and access it in the browser.\r\nDownload self sign Certificate file from .local\/share\/oauth2-proxy\/server.crt and allow it into your browser to bypass security checks",
+    "features": null,
+    "images": [
+        "quay.io\/parkervcp\/pterodactyl-images:debian_nodejs-14",
+        "ghcr.io\/software-noob\/arm64:nodejs_16",
+        "ghcr.io\/software-noob\/arm64:nodejs_14",
+        "ghcr.io\/software-noob\/arm64:nodejs_12",
+        "ghcr.io\/parkervcp\/yolks:nodejs_14",
+        "ghcr.io\/parkervcp\/yolks:nodejs_12",
+        "ghcr.io\/parkervcp\/yolks:nodejs_16"
+    ],
+    "file_denylist": [],
+    "startup": ".local\/bin\/start.sh",
+    "config": {
+        "files": "{\r\n    \".config\/oauth2-proxy\/oauth2-proxy.cfg\": {\r\n        \"parser\": \"file\",\r\n        \"find\": {\r\n            \"https_address = \": \"https_address = \\\":{{server.build.default.port}}\\\"\",\r\n            \"http_address = \": \"http_address = \\\":{{server.build.default.port}}\\\"\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"HTTP server listening on\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "apt update\r\napt install -y curl jq openssl\r\n#MATCH=linux-arm64\r\n\r\n# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/.local\/lib \/mnt\/server\/.local\/share\/code-server \/mnt\/server\/.local\/share\/oauth2-proxy \/mnt\/server\/.local\/bin \/mnt\/server\/.config\/code-server  \/mnt\/server\/.config\/oauth2-proxy \/mnt\/server\/projects \/mnt\/server\/.local\/share\/logs\r\n\r\n# clean old folders from last install\r\nrm -rf \/mnt\/server\/.local\/lib\/* \/mnt\/server\/.local\/lib\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/.local\/bin\/* \/mnt\/server\/.local\/bin\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/.local\/share\/logs\/*\r\n\r\n# Change permission of projects directory so it can be accessed by code-server\r\nchmod 777 \/mnt\/server\/projects\r\ntouch \"\/mnt\/server\/projects\/PLACE YOUR PROJECTS HERE\"\r\n\r\n# make certificate\r\nif [ ! -e \/mnt\/server\/.local\/share\/oauth2-proxy\/server.key ] && [ ! -e \/mnt\/server\/.local\/share\/oauth2-proxy\/server.crt ]; then\r\nopenssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \/mnt\/server\/.local\/share\/oauth2-proxy\/server.key -out \/mnt\/server\/.local\/share\/oauth2-proxy\/server.crt -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\n# Check for available versions. Defaults to latest if no valid version is found.\r\nLATEST_JSON=$(curl --silent \"https:\/\/api.github.com\/repos\/oauth2-proxy\/oauth2-proxy\/releases\/latest\")\r\nRELEASES=$(curl --silent \"https:\/\/api.github.com\/repos\/oauth2-proxy\/oauth2-proxy\/releases\")\r\nif [ -z \"${OVERSION}\" ] || [ \"${OVERSION}\" == \"latest\" ]; then\r\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i ${MATCH}.tar.gz)\r\nelse\r\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"v${OVERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\r\n    if [ \"v${OVERSION}\" == \"${VERSION_CHECK}\" ]; then\r\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"v${OVERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i ${MATCH}.tar.gz)\r\n    else\r\n        echo -e \"defaulting to latest release\"\r\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i ${MATCH}.tar.gz)\r\n    fi\r\nfi\r\n# Download the given Version and extract it\r\necho \"Downloading ${DOWNLOAD_URL}\"\r\ncurl -fL ${DOWNLOAD_URL} | tar -C \/mnt\/server\/.local\/lib -xz\r\nmv \/mnt\/server\/.local\/lib\/oauth2-proxy-*${MATCH} \/mnt\/server\/.local\/lib\/oauth2-proxy-${VERSION}\r\nln -sf ..\/lib\/oauth2-proxy-${VERSION}\/oauth2-proxy \/mnt\/server\/.local\/bin\/oauth2-proxy\r\n\r\nCOOKIE=$(cat \/dev\/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)\r\n\r\necho \"${EMAILS}\" > \/mnt\/server\/.local\/share\/oauth2-proxy\/emails\r\necho \"ssl_upstream_insecure_skip_verify = true\r\n#ssl_insecure_skip_verify = true\r\n#https:\/\/github.com\/settings\/developers\r\nskip_provider_button = true\r\nprovider = \\\"github\\\"\r\n#client_id = \\\"\\\"\r\n#client_secret = \\\"\\\"\r\nhttps_address = \\\":${SERVER_PORT}\\\"\r\nhttp_address = \\\":${SERVER_PORT}\\\"\r\nredirect_url = \\\"https:\/\/${HOSTNAME}:${SERVER_PORT}\/oauth2\/callback\\\"\r\nauthenticated_emails_file = \\\"\/home\/container\/.local\/share\/oauth2-proxy\/emails\\\"\r\ntls_cert_file = \\\"\/home\/container\/.local\/share\/oauth2-proxy\/server.crt\\\"\r\ntls_key_file = \\\"\/home\/container\/.local\/share\/oauth2-proxy\/server.key\\\"\r\nupstreams = [\\\"https:\/\/127.0.0.1:8080\/\\\"]\r\ncookie_secret = \\\"${COOKIE}\\\"\r\ncookie_name = \\\"_oauth2_proxy\\\"\r\ncookie_expire = \\\"168h\\\"\r\ncookie_secure = true\r\ncookie_httponly = true\r\nlogging_filename = \\\"\/home\/container\/.local\/share\/logs\/oauth2-proxy.log\\\"\r\nlogging_max_size = 100\r\nlogging_max_age = 7\r\nlogging_local_time = true\r\nlogging_compress = false\r\nstandard_logging = true\r\nstandard_logging_format = \\\"[{{.Timestamp}}] [{{.File}}] {{.Message}}\\\"\r\nrequest_logging = true\r\nrequest_logging_format = \\\"{{.Client}} - {{.Username}} [{{.Timestamp}}] {{.Host}} {{.RequestMethod}} {{.Upstream}} {{.RequestURI}} {{.Protocol}} {{.UserAgent}} {{.StatusCode}} {{.ResponseSize}} {{.RequestDuration}}\\\"\r\nauth_logging = true\r\nauth_logging_format = \\\"{{.Client}} - {{.Username}} [{{.Timestamp}}] [{{.Status}}] {{.Message}}\\\"\r\n\" > \/mnt\/server\/.config\/oauth2-proxy\/oauth2-proxy.cfg\r\n\r\n# Check for available versions. Defaults to latest if no valid version is found.\r\nLATEST_JSON=$(curl --silent \"https:\/\/api.github.com\/repos\/cdr\/code-server\/releases\/latest\")\r\nRELEASES=$(curl --silent \"https:\/\/api.github.com\/repos\/cdr\/code-server\/releases\")\r\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\r\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i ${MATCH}.tar.gz)\r\nelse\r\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"v${VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\r\n    if [ \"v${VERSION}\" == \"${VERSION_CHECK}\" ]; then\r\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"v${VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i ${MATCH}.tar.gz)\r\n    else\r\n        echo -e \"defaulting to latest release\"\r\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i ${MATCH}.tar.gz)\r\n    fi\r\nfi\r\n# Download the given Version and extract it\r\necho \"Downloading ${DOWNLOAD_URL}\"\r\ncurl -fL ${DOWNLOAD_URL} | tar -C \/mnt\/server\/.local\/lib -xz\r\nmv \/mnt\/server\/.local\/lib\/code-server-*${MATCH} \/mnt\/server\/.local\/lib\/code-server-${VERSION}\r\nln -sf ..\/lib\/code-server-${VERSION}\/bin\/code-server \/mnt\/server\/.local\/bin\/code-server\r\n\r\n\r\n\r\nPATH=\"\/mnt\/server\/.local\/bin:$PATH\"\r\n\r\necho \"bind-addr: 127.0.0.1:8080\r\nauth: none\r\ncert-host: 127.0.0.1:8080\r\ncert: true\r\ndisable-telemetry: true\r\ndisable-update-check: true\" > \/mnt\/server\/.config\/code-server\/config.yaml\r\n\r\necho \"\r\nsetsid \/home\/container\/.local\/bin\/oauth2-proxy --config \/home\/container\/.config\/oauth2-proxy\/oauth2-proxy.cfg >\/dev\/null 2>&1 < \/dev\/null &\r\n\/bin\/sh \/home\/container\/.local\/bin\/code-server\r\necho \\\"service started, see log files at .local\/share\/logs\\\"\" > \/mnt\/server\/.local\/bin\/start.sh\r\nchmod +x \/mnt\/server\/.local\/bin\/start.sh\r\n\r\necho \"Install complete\"",
+            "container": "debian:buster-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Code-Server Version",
+            "description": "Version for (re)installation such as 3.9.3. Defaults to latest version if no valid version is provided",
+            "env_variable": "VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20"
+        },
+        {
+            "name": "Machine Type",
+            "description": "Select machine linux-arm64 or linux-amd64",
+            "env_variable": "MATCH",
+            "default_value": "linux-amd64",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:linux-amd64,linux-arm64"
+        },
+        {
+            "name": "Hostname",
+            "description": "Hostname to use with self sign certificate and to access code server\r\nUse this url https:\/\/HOSTNAME:PORT afterwards",
+            "env_variable": "HOSTNAME",
+            "default_value": "example.com",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string"
+        },
+        {
+            "name": "Oauth2-proxy Version",
+            "description": "Select Oauth2-proxy Version",
+            "env_variable": "OVERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20"
+        },
+        {
+            "name": "Github ClientID",
+            "description": "Create a new OAuth App at https:\/\/github.com\/settings\/developers.\r\nHomepage URL: https:\/\/HOSTNAME:PORT\r\nAuthorization callback URL: https:\/\/HOSTNAME:PORT\/oauth2\/callback",
+            "env_variable": "OAUTH2_PROXY_CLIENT_ID",
+            "default_value": "123456",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50"
+        },
+        {
+            "name": "Github Secret",
+            "description": "Create a new OAuth App at https:\/\/github.com\/settings\/developers.\r\nHomepage URL: https:\/\/HOSTNAME:PORT\r\nAuthorization callback URL: https:\/\/HOSTNAME:PORT\/oauth2\/callback",
+            "env_variable": "OAUTH2_PROXY_CLIENT_SECRET",
+            "default_value": "123456",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50"
+        },
+        {
+            "name": "Emails",
+            "description": "List one email per line to be authorized to access your site",
+            "env_variable": "EMAILS",
+            "default_value": "email@example.com",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:120"
+        }
+    ]
+}
