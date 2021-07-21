@@ -1,0 +1,42 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-07-20T23:46:53-03:00",
+    "name": "Redis-6",
+    "author": "arvati@hotmail.com",
+    "description": "Redis is an open source (BSD licensed), in-memory data structure store, used as a database, cache and message broker. It supports data structures such as strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs, geospatial indexes with radius queries and streams.",
+    "features": null,
+    "images": [
+        "arvati\/pterodactyl:redis_6",
+        "quay.io\/parkervcp\/pterodactyl-images:db_redis-6"
+    ],
+    "file_denylist": [],
+    "startup": ".local\/bin\/start.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Running\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/ash\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/.local\/bin\r\n\r\n# clean old folders from last install\r\nrm -rf \/mnt\/server\/.local\/bin\/* \/mnt\/server\/.local\/bin\/.[a-zA-Z0-9]*\r\n\r\ncd \/mnt\/server\/\r\n\r\nif [ ! -e \/mnt\/server\/redis.conf ]; then\r\n    curl https:\/\/raw.githubusercontent.com\/arvati\/pterodactyl-eggs\/master\/database\/redis\/redis6.conf -o redis.conf\r\nfi\r\n\r\necho \"#!\/bin\/sh\r\n\/usr\/local\/bin\/redis-server \/home\/container\/redis.conf --save 60 1 --dir \/home\/container\/ --bind 0.0.0.0 --port ${SERVER_PORT} --requirepass ${SERVER_PASSWORD} --maxmemory ${SERVER_MEMORY}mb --daemonize yes \r\nexport REDISCLI_AUTH=${SERVER_PASSWORD}\r\necho \\\"Running\\\"\r\nredis-cli -p ${SERVER_PORT} monitor\r\nredis-cli -p ${SERVER_PORT} shutdown save\r\n\" > \/mnt\/server\/.local\/bin\/start.sh\r\nchmod +x \/mnt\/server\/.local\/bin\/start.sh\r\n\r\nsleep 5\r\necho -e \"Install complete. Made this to not have issues.\"",
+            "container": "arvati\/pterodactyl:installers_alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Redis Password",
+            "description": "The password redis should use to secure the server.",
+            "env_variable": "SERVER_PASSWORD",
+            "default_value": "P@55w0rd",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string"
+        }
+    ]
+}
