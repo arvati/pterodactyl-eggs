@@ -1,0 +1,70 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": "https:\/\/raw.githubusercontent.com\/Linux123123\/Pterodactyl-Discord-Bot\/master\/egg-discord-pterodactyl-bot.json"
+    },
+    "exported_at": "2022-08-01T21:42:55-03:00",
+    "name": "Discord Pterodactyl Bot",
+    "author": "arvati@hotmail.com",
+    "description": "A Pterodactyl Discord Bot egg.",
+    "features": null,
+    "images": [
+        "ghcr.io\/software-noob\/pterodactyl-images:nodejs_14",
+        "ghcr.io\/software-noob\/arm64:nodejs_14",
+        "linux123123\/pterodactyl-images:buster-nodejs-lts"
+    ],
+    "file_denylist": [],
+    "startup": "yarn pterodactyl",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"ready to serve\"\r\n}",
+        "logs": "{}",
+        "stop": "^z"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# Pterodactyl Discord Bot Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\n\r\napt-get update && apt-get -y install git\r\n\r\nmkdir -p \/mnt\/server\r\nrm -rf \/mnt\/server\/* \/mnt\/server\/.[a-zA-Z0-9]*\r\ncd \/mnt\/server\r\n\r\necho \"Pulling the Pterodactyl Discord Bot from github\"\r\n\r\ngit clone --single-branch --branch master https:\/\/github.com\/arvati\/Pterodactyl-Discord-Bot.git .\r\n\r\necho \"Installing dependencies!\"\r\n\r\nyarn install --production\r\n\r\necho \"Compiling\/Building\"\r\n\r\nyarn build\r\n\r\necho \"Install complete. If you watched this. Congrats.\"",
+            "container": "node:lts-buster",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Discord Token",
+            "description": "Your discord api token. Available on https:\/\/discord.com\/developers\/applications\/me",
+            "env_variable": "TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:59|max:59"
+        },
+        {
+            "name": "Pterodactyl Token",
+            "description": "Your pterodactyl API token. It can be created in the Application API section of admin settings. Check all the boxes for both read and write.",
+            "env_variable": "PTERO_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:48|max:48"
+        },
+        {
+            "name": "Pterodactyl URL",
+            "description": "Your pterodactyl host domain\/IP. Must include http\/https. Example: \"https:\/\/panel.linux123123.cf\"",
+            "env_variable": "PTERO_HOST",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string"
+        },
+        {
+            "name": "Pterodactyl Client Token",
+            "description": "Your pterodactyl client API token. It can be created in the admin ACCOUNT API section. It needs to be an admin account to have all the permissions to start and stop servers.",
+            "env_variable": "PTERO_CLIENT_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|min:48|max:48"
+        }
+    ]
+}
