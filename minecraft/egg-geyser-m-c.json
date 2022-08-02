@@ -1,0 +1,59 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2022-08-01T22:09:32-03:00",
+    "name": "GeyserMC",
+    "author": "support@geysermc.org",
+    "description": "Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition, closing the gap from those wanting to play true cross-platform.",
+    "features": null,
+    "images": [
+        "quay.io\/geysermc\/pterodactyl-stuff:docker-geyser"
+    ],
+    "file_denylist": [],
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": "{\r\n    \"config.yml\": {\r\n        \"parser\": \"yaml\",\r\n        \"find\": {\r\n            \"bedrock.address\": \"0.0.0.0\",\r\n            \"bedrock.port\": \"{{server.build.default.port}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \")! Run \/geyser help for help!\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{}",
+        "stop": "geyser shutdown"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/ash\r\n# GeyserMC Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napk update\r\napk add curl\r\ncd \/mnt\/server\r\ncurl -s https:\/\/ci.opencollab.dev\/job\/GeyserMC\/job\/Geyser\/job\/${UPDATE_BRANCH}\/lastSuccessfulBuild\/api\/xml?xpath=\/\/lastBuiltRevision\/SHA1 | sed 's\/.*>\\(.*\\)<.*\/\\1\/' > \".currenthash\"\r\ncurl -o ${SERVER_JARFILE} https:\/\/ci.opencollab.dev\/job\/GeyserMC\/job\/Geyser\/job\/${UPDATE_BRANCH}\/lastSuccessfulBuild\/artifact\/bootstrap\/standalone\/target\/Geyser.jar\r\ncurl -o config.yml https:\/\/raw.githubusercontent.com\/GeyserMC\/Geyser\/master\/connector\/src\/main\/resources\/config.yml",
+            "container": "alpine:3.4",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Geyser JAR",
+            "description": "This is the GeyserMC jar.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "Geyser.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|regex:\/^([\\w\\d._-]+)(\\.jar)$\/"
+        },
+        {
+            "name": "Auto update",
+            "description": "",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean"
+        },
+        {
+            "name": "Branch",
+            "description": "The branch to fetch when downloading Geyser",
+            "env_variable": "UPDATE_BRANCH",
+            "default_value": "master",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string"
+        }
+    ]
+}
