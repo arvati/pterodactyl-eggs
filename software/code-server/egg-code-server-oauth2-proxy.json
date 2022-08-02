@@ -4,7 +4,7 @@
         "version": "PTDL_v1",
         "update_url": null
     },
-    "exported_at": "2021-07-20T18:07:56-03:00",
+    "exported_at": "2022-08-01T21:57:31-03:00",
     "name": "Code-Server with oauth2-proxy",
     "author": "arvati@hotmail.com",
     "description": "Run VS Code on any machine anywhere and access it in the browser.\r\nDownload self sign Certificate file from .local\/share\/oauth2-proxy\/server.crt and allow it into your browser to bypass security checks",
