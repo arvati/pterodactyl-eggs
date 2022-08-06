@@ -1,0 +1,112 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2022-08-06T18:02:36-03:00",
+    "name": "Omada Controller",
+    "author": "arvati@hotmail.com",
+    "description": "Run Omada Controller.\r\nDownload self sign Certificate file from cert\/tls.crt and allow it into your browser to bypass security checks",
+    "features": null,
+    "docker_images": {
+        "arvati\/pterodactyl:omada_base": "arvati\/pterodactyl:omada_base"
+    },
+    "file_denylist": [],
+    "startup": "\/usr\/bin\/java -server -Xms128m -Xmx1024m -XX:MaxHeapFreeRatio=60 -XX:MinHeapFreeRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=\/home\/container\/logs\/java_heapdump.hprof -Djava.awt.headless=true -cp \"\/home\/container\/lib\/*::\/home\/container\/properties: \" com.tplink.smb.omada.starter.OmadaLinuxMain]",
+    "config": {
+        "files": "{\r\n    \"properties\/omada.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"manage.http.port\": \"{{server.build.env.MANAGE_HTTP_PORT}}\",\r\n            \"manage.https.port\": \"{{server.build.default.port}}\",\r\n            \"portal.http.port\": \"{{server.build.env.PORTAL_HTTP_PORT}}\",\r\n            \"portal.https.port\": \"{{server.build.env.PORTAL_HTTPS_PORT}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"service started, see log files at logs folder\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/certs \/mnt\/server\/lib \/mnt\/server\/bin \/mnt\/server\/properties \/mnt\/server\/data\/html \/mnt\/server\/data\/pdf \/mnt\/server\/data\/db \/mnt\/server\/data\/keystore \/mnt\/server\/logs \/mnt\/server\/work\r\n\r\n# clean old folders from last install\r\nrm -rf \/mnt\/server\/lib\/* \/mnt\/server\/lib\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/bin\/* \/mnt\/server\/bin\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/properties\/* \/mnt\/server\/properties\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/data\/html\/* \/mnt\/server\/data\/html\/.[a-zA-Z0-9]*\r\nrm -rf \/mnt\/server\/install.sh\r\nrm -rf \/mnt\/server\/uninstall.sh\r\n\r\n# Copy Omada files into container mount\r\nif [ -f \"\/omada.tar.gz\" ]\r\nthen\r\n  echo \"INFO: Extracting omada into '\/mnt\/server\/'\"\r\n  tar zxvf \/omada.tar.gz -C \/mnt\/server\r\nelse\r\n  echo \"ERROR: File '\/omada.tar.gz' not found.\"\r\nfi\r\n\r\n# make certificate\r\nif [ ! -e \"\/mnt\/server\/certs\/${SSL_KEY_NAME}\" ] || [ ! -e \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\" ]; then\r\n    rm -rf \"\/mnt\/server\/certs\/${SSL_KEY_NAME}\"\r\n    rm -rf \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\"\r\n    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \"\/mnt\/server\/certs\/${SSL_KEY_NAME}\" -out \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\" -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\nif [ -f \"\/mnt\/server\/certs\/${SSL_KEY_NAME}\" ] && [ -f \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\" ]; then\r\n  rm -f \"\/mnt\/server\/data\/keystore\/eap.keystore\"\r\n  openssl pkcs12 -export \\\r\n    -inkey \"\/mnt\/server\/certs\/${SSL_KEY_NAME}\" \\\r\n    -in \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\" \\\r\n    -certfile \"\/mnt\/server\/certs\/${SSL_CERT_NAME}\" \\\r\n    -name eap \\\r\n    -out \"\/mnt\/server\/data\/keystore\/eap.keystore\" \\\r\n    -passout pass:tplink\r\n  chmod 400 \"\/mnt\/server\/data\/keystore\/eap.keystore\"\r\nfi\r\n\r\nPATH=\"\/mnt\/server\/bin:$PATH\"\r\n\r\necho \"Install complete\"",
+            "container": "arvati\/pterodactyl:installers_alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "MANAGE_HTTP_PORT",
+            "description": "",
+            "env_variable": "MANAGE_HTTP_PORT",
+            "default_value": "8088",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "PORTAL_HTTP_PORT",
+            "description": "",
+            "env_variable": "PORTAL_HTTP_PORT",
+            "default_value": "8088",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "PORTAL_HTTPS_PORT",
+            "description": "",
+            "env_variable": "PORTAL_HTTPS_PORT",
+            "default_value": "8843",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "SHOW_SERVER_LOGS",
+            "description": "",
+            "env_variable": "SHOW_SERVER_LOGS",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "SHOW_MONGODB_LOGS",
+            "description": "",
+            "env_variable": "SHOW_MONGODB_LOGS",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "TLS_1_11_ENABLED",
+            "description": "",
+            "env_variable": "TLS_1_11_ENABLED",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "SSL_CERT_NAME",
+            "description": "",
+            "env_variable": "SSL_CERT_NAME",
+            "default_value": "tls.crt",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50",
+            "field_type": "text"
+        },
+        {
+            "name": "SSL_KEY_NAME",
+            "description": "",
+            "env_variable": "SSL_KEY_NAME",
+            "default_value": "tls.key",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50",
+            "field_type": "text"
+        }
+    ]
+}
