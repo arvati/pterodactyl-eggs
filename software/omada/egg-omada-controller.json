@@ -4,7 +4,7 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2022-08-08T12:39:36-03:00",
+    "exported_at": "2022-08-08T19:30:14-03:00",
     "name": "Omada Controller",
     "author": "arvati@hotmail.com",
     "description": "Run Omada Controller.\r\nDownload self sign Certificate file from cert\/tls.crt and allow it into your browser to bypass security checks",
@@ -13,18 +13,18 @@
         "arvati\/pterodactyl:omada_base": "arvati\/pterodactyl:omada_base"
     },
     "file_denylist": [],
-    "startup": "java -server -Xms128m -Xmx1024m -XX:MaxHeapFreeRatio=60 -XX:MinHeapFreeRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=\/home\/container\/logs\/java_heapdump.hprof -Djava.awt.headless=true \r\n-cp \/usr\/share\/java\/commons-daemon.jar:\/home\/container\/lib\/*:\/home\/container\/properties com.tplink.smb.omada.starter.OmadaLinuxMain",
+    "startup": "java -server -Xms128m -Xmx1024m -XX:MaxHeapFreeRatio=60 -XX:MinHeapFreeRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath={{OMADA_DIR}}\/logs\/java_heapdump.hprof -Djava.awt.headless=true \r\n-cp \/usr\/share\/java\/commons-daemon.jar:{{OMADA_DIR}}\/lib\/*:{{OMADA_DIR}}\/properties com.tplink.smb.omada.starter.OmadaLinuxMain",
     "config": {
         "files": "{\r\n    \"properties\/omada.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"manage.http.port\": \"{{server.build.env.MANAGE_HTTP_PORT}}\",\r\n            \"manage.https.port\": \"{{server.build.default.port}}\",\r\n            \"portal.http.port\": \"{{server.build.env.PORTAL_HTTP_PORT}}\",\r\n            \"portal.https.port\": \"{{server.build.env.PORTAL_HTTPS_PORT}}\"\r\n        }\r\n    }\r\n}",
-        "startup": "{\r\n    \"done\": \"service started, see log files at logs folder\"\r\n}",
+        "startup": "{\r\n    \"done\": \"Spring Boot\"\r\n}",
         "logs": "{}",
         "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/ash\r\n\r\nOMADA_DIR=\"\/opt\/tplink\/EAPController\"\r\n\r\n# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/cert \r\n\r\n# make certificate\r\nif [ ! -e \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" ] || [ ! -e \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" ]; then\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\"\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\"\r\n    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" -out \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\necho \"#!\/bin\/sh\r\nSHOW_SERVER_LOGS=\\\"${SHOW_SERVER_LOGS:-true}\\\"\r\nSHOW_MONGODB_LOGS=\\\"${SHOW_MONGODB_LOGS:-false}\\\"\r\n\r\nif [ \\\"${SHOW_SERVER_LOGS}\\\" = \\\"true\\\" ] && [ -f $OMADA_DIR\/logs\/server.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/server.log &\r\nfi\r\nif [ \\\"${SHOW_MONGODB_LOGS}\\\" = \\\"true\\\" ] && [ -f $OMADA_DIR\/logs\/mongod.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/mongod.log &\r\nfi\r\n\" > \/mnt\/server\/.profile\r\n\r\necho \"Install complete\"",
-            "container": "arvati\/pterodactyl:installers_alpine",
-            "entrypoint": "ash"
+            "script": "#!\/bin\/bash\r\n\r\n# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\ntar zxvf \/omada.tar.gz -C \/mnt\/server\r\n\r\n# make certificate\r\nif [ ! -e \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" ] || [ ! -e \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" ]; then\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\"\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\"\r\n    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" -out \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\n\r\necho \"Install complete\"",
+            "container": "arvati\/pterodactyl:omada_installer",
+            "entrypoint": "bash"
         }
     },
     "variables": [
@@ -72,16 +72,6 @@
             "name": "SHOW_MONGODB_LOGS",
             "description": "",
             "env_variable": "SHOW_MONGODB_LOGS",
-            "default_value": "false",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string|max:5",
-            "field_type": "text"
-        },
-        {
-            "name": "TLS_1_11_ENABLED",
-            "description": "",
-            "env_variable": "TLS_1_11_ENABLED",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
