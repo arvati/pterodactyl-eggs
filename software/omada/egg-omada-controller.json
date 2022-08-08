@@ -4,7 +4,7 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2022-08-08T12:34:52-03:00",
+    "exported_at": "2022-08-08T12:39:36-03:00",
     "name": "Omada Controller",
     "author": "arvati@hotmail.com",
     "description": "Run Omada Controller.\r\nDownload self sign Certificate file from cert\/tls.crt and allow it into your browser to bypass security checks",
@@ -22,7 +22,7 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/ash\r\n\r\nOMADA_VER=\"${OMADA_VER:-5.4.6}\"\r\nDOWNLOAD_URL=\"https:\/\/static.tp-link.com\/upload\/software\/2022\/202207\/20220729\/Omada_SDN_Controller_v${OMADA_VER}_Linux_x64.tar.gz\"\r\n\r\nOMADA_DIR=\"\/opt\/tplink\/EAPController\"\r\n\r\n# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/cert \r\n\r\n# make certificate\r\nif [ ! -e \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" ] || [ ! -e \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" ]; then\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\"\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\"\r\n    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" -out \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\necho \"#!\/bin\/sh\r\nSHOW_SERVER_LOGS=\\\"${SHOW_SERVER_LOGS:-true}\\\"\r\nSHOW_MONGODB_LOGS=\\\"${SHOW_MONGODB_LOGS:-false}\\\"\r\n\r\nif [ \\\"${SHOW_SERVER_LOGS}\\\" = \\\"true\\\" ] && [ -f $HOME\/logs\/server.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/server.log &\r\nfi\r\nif [ \\\"${SHOW_MONGODB_LOGS}\\\" = \\\"true\\\" ] && [ -f $HOME\/logs\/mongod.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/mongod.log &\r\nfi\r\n\" > \/mnt\/server\/.profile\r\n\r\necho \"Install complete\"",
+            "script": "#!\/bin\/ash\r\n\r\nOMADA_DIR=\"\/opt\/tplink\/EAPController\"\r\n\r\n# Create initial directories\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n# Create needed directories\r\nmkdir -p \/mnt\/server\/cert \r\n\r\n# make certificate\r\nif [ ! -e \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" ] || [ ! -e \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" ]; then\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\"\r\n    rm -rf \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\"\r\n    openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout \"\/mnt\/server\/cert\/${SSL_KEY_NAME}\" -out \"\/mnt\/server\/cert\/${SSL_CERT_NAME}\" -subj \/CN=${HOSTNAME}:${SERVER_PORT} -addext subjectAltName=DNS:${HOSTNAME}:${SERVER_PORT}\r\nfi\r\n\r\necho \"#!\/bin\/sh\r\nSHOW_SERVER_LOGS=\\\"${SHOW_SERVER_LOGS:-true}\\\"\r\nSHOW_MONGODB_LOGS=\\\"${SHOW_MONGODB_LOGS:-false}\\\"\r\n\r\nif [ \\\"${SHOW_SERVER_LOGS}\\\" = \\\"true\\\" ] && [ -f $OMADA_DIR\/logs\/server.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/server.log &\r\nfi\r\nif [ \\\"${SHOW_MONGODB_LOGS}\\\" = \\\"true\\\" ] && [ -f $OMADA_DIR\/logs\/mongod.log ]\r\nthen\r\n  tail -F -n 0 $HOME\/logs\/mongod.log &\r\nfi\r\n\" > \/mnt\/server\/.profile\r\n\r\necho \"Install complete\"",
             "container": "arvati\/pterodactyl:installers_alpine",
             "entrypoint": "ash"
         }
